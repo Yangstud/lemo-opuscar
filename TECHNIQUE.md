@@ -1,6 +1,6 @@
 # Technique: how the films are built
 
-Every film in this library is made from code: no video generation, no stock footage. This page explains the pipeline, so you can reproduce it with our tools in `core/` or rebuild it in your own stack. Pair it with [`DIRECTOR.md`](DIRECTOR.md) and one `styles/<slug>/STYLE.md`. 中文版：[docs/zh-CN/TECHNIQUE.md](docs/zh-CN/TECHNIQUE.md)
+Every film in this library is made from code: no stock footage, and by default no video generation. Where a shot needs motion that is costly to hand-animate (water, smoke, cloth, a crowd, a turning head), you may let a video model animate **between keyframes the code drew** (§13). The look stays in the code. This page explains the pipeline, so you can reproduce it with our tools in `core/` or rebuild it in your own stack. Pair it with [`DIRECTOR.md`](DIRECTOR.md) and one `styles/<slug>/STYLE.md`. 中文版：[docs/zh-CN/TECHNIQUE.md](docs/zh-CN/TECHNIQUE.md)
 
 ```
 timeline (single source of truth)
@@ -133,3 +133,19 @@ Only CC0, CC BY or OFL material, each listed in the film's `CREDITS` file with i
 | a CRT or VHS look | `core/post/crt.js`, `styles/ascii-crt/`, `styles/backrooms/` |
 
 Each style's `STYLE.md` §9 shows how its demo was built. Treat our demos as reference implementations: read them to see how a technique works, then write your own film. They are not kits for rebuilding our films.
+
+## 13. Generated motion (optional)
+
+A video model is a tool for single shots, not a replacement for the page. The code still draws the frames that define the look; the model only fills in motion.
+
+1. **Keyframes from the page.** Render the first (and, if the move has a destination, the last) frame of the shot with `still.mjs`, at the final resolution, without grain or captions.
+2. **Generate.** List the shots in `shots.json` (`id`, `prompt`, `first`, `last`, `dur`, `seed`, optional `model`, `args`, `keys`) and run
+   ```sh
+   python core/gen/genvideo.py films/<name>/shots.json films/<name>/gen --provider fal   # or replicate; FAL_KEY / REPLICATE_API_TOKEN
+   python core/gen/genvideo.py films/<name>/shots.json films/<name>/gen --provider mock  # free offline dissolve, to wire up timing first
+   ```
+   Clips are cut into JPEG frames and cached by a hash of their inputs; only changed shots are sent again (`--force s03` to reroll).
+3. **Play it inside render(t).** `core/gen/clip.js`: `loadClips('gen/')` before `READY`, then `drawClip(ctx, clips, 's03', t - t0, 0, 0, W, H, { fit: 'stretch', span })`. Draw the style's grade, paper texture, outlines, captions and post pass on top, so a generated shot sits in the same film as the drawn ones. Use `step: 12` for styles animated on twos.
+4. **Check it like any shot.** Contact sheets at 0.2 s across the clip: drift in colour, line weight or character design, melting hands and invented text are rejects. Reroll with a new seed, shorten the span, or draw the shot by hand.
+
+Prompts describe motion only ("the boat drifts left, ripples spread, camera locked"); the keyframe already carries the style. Keep generated shots short (2–5 s) and few. Record the provider, model and prompt of each clip in the film's `CREDITS` (the tool writes them to `gen/clips.json`) and respect the model's licence terms for output.

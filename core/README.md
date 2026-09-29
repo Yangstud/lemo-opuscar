@@ -27,6 +27,12 @@ demo 是一个静态页面 `styles/<slug>/demo/index.html`（仓库根作为静�
 | `core/audio/sfx.py` | 程序化音效与混音工具：滤波、包络、click/whoosh/thump/ding…、`compress`、`limit`、`add(buf, x, at, gain, pan)` |
 | `core/audio/sampler.py`、`pluck.py` | 采样乐器 + 物理建模拨弦（见 `core/audio/INSTRUMENTS.md`，最后一行 `STATUS: READY` 才可用） |
 
+## 生成运动（可选）
+| 文件 | 作用 |
+|---|---|
+| `core/gen/genvideo.py shots.json out_dir [--provider fal\|replicate\|mock] [--fps 24] [--force id,..]` | 以代码渲出的首/尾帧做图生视频，切帧缓存到 `out_dir/<id>/`，索引 `clips.json`；`mock` 离线叠化用于调时间 |
+| `core/gen/clip.js` | `loadClips(base)`、`drawClip(ctx, clips, id, lt, x, y, w, h, {fit, span, step})`：在 render(t) 里按时间确定性取帧 |
+
 ## 画面
 | 文件 | 作用 |
 |---|---|

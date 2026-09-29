@@ -43,7 +43,7 @@ All 39 styles · 全部风格:
 3. **Look.** Render a model sheet or style frames with the real drawing code and check them yourself against the `STYLE.md` (DIRECTOR.md §5).
 4. **Storyboard, only if the user asked for it.** Show the key shots rendered in the style, with durations and lines, plus the logline (DIRECTOR.md §5).
    **Stop and wait for approval.** If they didn't ask for it, don't stop.
-5. **Produce.** Voice → check → score (can run in parallel) → animation → mix → render.
+5. **Produce.** Voice → check → score (can run in parallel) → animation → mix → render. For the odd shot whose motion is too costly to animate in code, you may animate between code-drawn keyframes with a video model (TECHNIQUE.md §13), if the user has an API key; everything else stays in code.
 6. **Self-check** (DIRECTOR.md §11), then deliver `films/<name>/<name>.mp4`, `.srt`, `poster.jpg` and the source with `build.sh`.
 
 A user's film carries no LemoLab credit and no watermark. The "LemoLab × Claude Opus 5.5" end card in the `STYLE.md` files belongs to our demos only.
