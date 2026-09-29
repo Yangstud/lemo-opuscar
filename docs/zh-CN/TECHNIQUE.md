@@ -1,6 +1,6 @@
 # 技术方法：片子是怎么做出来的
 
-本库每一支片子都是用代码做的：不用视频生成，不用素材库画面。这一页讲清楚整条管线，你可以用 `core/` 里的现成工具，也可以在自己的技术栈里重做。配合 [导演方法](DIRECTOR.md) 和某个风格的 `styles/<slug>/STYLE.md` 一起用。English: [TECHNIQUE.md](../../TECHNIQUE.md)
+本库每一支片子都是用代码做的：不用素材库画面，默认也不用视频生成。遇到手画成本很高的运动（水、烟、布料、人群、转头），可以让视频模型在**代码画好的关键帧之间**补运动（见 §13），画风仍由代码决定。这一页讲清楚整条管线，你可以用 `core/` 里的现成工具，也可以在自己的技术栈里重做。配合 [导演方法](DIRECTOR.md) 和某个风格的 `styles/<slug>/STYLE.md` 一起用。English: [TECHNIQUE.md](../../TECHNIQUE.md)
 
 ```
 时间线（唯一的数据来源）
@@ -133,3 +133,19 @@ export const HIT  = { pratfall: ['chase', 6], ... };   // 段落 + 第几拍
 | CRT / 录像带质感 | `core/post/crt.js`、`styles/ascii-crt/`、`styles/backrooms/` |
 
 每个风格 `STYLE.md` 的 §9 记录了这支样片是怎么做的。我们的样片是参考实现：读它们，看某个技法怎么实现，再写你自己的片子。它们不是用来重建我们原片的套件。
+
+## 13. 生成运动（可选）
+
+视频模型只用于个别镜头，不取代页面：代码画定画风的帧，模型只补运动。
+
+1. **关键帧来自页面。** 用 `still.mjs` 按成片分辨率渲出镜头首帧（有落点时再渲尾帧），不加颗粒和字幕。
+2. **生成。** 在 `shots.json` 里列镜头（`id`、`prompt`、`first`、`last`、`dur`、`seed`，可选 `model`、`args`、`keys`），运行
+   ```sh
+   python core/gen/genvideo.py films/<name>/shots.json films/<name>/gen --provider fal   # 或 replicate；需 FAL_KEY / REPLICATE_API_TOKEN
+   python core/gen/genvideo.py films/<name>/shots.json films/<name>/gen --provider mock  # 免费离线叠化，先对好时间
+   ```
+   片段切成 JPEG 帧并按输入哈希缓存，只重发改过的镜头（`--force s03` 重抽）。
+3. **在 render(t) 里播放。** `core/gen/clip.js`：`READY` 前 `loadClips('gen/')`，之后 `drawClip(ctx, clips, 's03', t - t0, 0, 0, W, H, { fit: 'stretch', span })`。调色、纸纹、描线、字幕和后期仍在上面由代码画，让生成镜头和手画镜头属于同一部片。一拍二的风格用 `step: 12`。
+4. **像审其它镜头一样审。** 每 0.2 s 出一张联系表：颜色、线宽或角色设计漂移、手部融化、凭空出现的文字都判废。换 seed 重抽、缩短时长，或改回手画。
+
+提示词只写运动（"纸船向左漂，涟漪散开，机位固定"），画风已在关键帧里。生成镜头要短（2–5 s）且少。每个片段的服务商、模型和提示词记入该片 `CREDITS`（工具会写进 `gen/clips.json`），并遵守模型对输出的许可条款。
